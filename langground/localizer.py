@@ -7,14 +7,14 @@ from pathlib import Path
 
 
 class OWL:
-    def __init__(self):
+    def __init__(self, threshold=0.4):
         model_name = "google/owlv2-large-patch14-ensemble"
         self.processor = Owlv2Processor.from_pretrained(model_name)
         self.model = Owlv2ForObjectDetection.from_pretrained(model_name).to("cuda")
         self.model.eval()   
         self.objects_f = Path(__file__).parent / "objects.txt"
         self.objects = [line.strip() for line in self.objects_f.open().readlines()]
-        self.threshold = 0.4
+        self.threshold = threshold
         self.device = "cuda"
     def localize(self, image):
         image = Image.fromarray(image)
