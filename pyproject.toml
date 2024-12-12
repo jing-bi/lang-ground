@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "langground"
+version = "0.1.0"
+description = "Use natural language to ground relevant things."
+readme = "README.md"
+authors = [
+    {name = "Jing Bi", email = "jbi5@ur.rochester.edu"},
+    {name = "Guangyu Sun", email = "guangyu@ucf.edu"}
+]
+requires-python = ">=3.8"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["langground", "langground.*"]
