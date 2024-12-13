@@ -1,11 +1,11 @@
 torch
 transformers
 opencv-python
+tenacity
 accelerate
 pillow
 scipy
 gradio
-tenacityw
 supervision
 ultralytics
 einops
