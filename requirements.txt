@@ -7,3 +7,4 @@ scipy
 gradio
 tenacity
 supervision
+ultralytics
