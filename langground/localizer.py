@@ -6,6 +6,16 @@ from PIL import Image
 from pathlib import Path
 from ultralytics import YOLO
 
+
+def build_localizer(model_name):
+    if model_name == "owl":
+        return OWL()
+    elif model_name == "yolo":
+        return YOLO11()
+    else:
+        raise ValueError(f"Unknown model name: {model_name}")
+
+
 class OWL:
 
     def __init__(self):

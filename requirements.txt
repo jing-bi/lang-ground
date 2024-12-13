@@ -5,7 +5,7 @@ accelerate
 pillow
 scipy
 gradio
-tenacity
+tenacityw
 supervision
 ultralytics
 einops
