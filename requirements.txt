@@ -8,3 +8,5 @@ gradio
 tenacity
 supervision
 ultralytics
+einops
+timm
