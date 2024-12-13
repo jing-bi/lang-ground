@@ -5,8 +5,12 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 
 
 class LLM:
-    def __init__(self, model_id="Qwen/Qwen2.5-7B-Instruct", device="cuda") -> None:
+    def __init__(self, model_id="Qwen/Qwen2.5-7B-Instruct",):
+
         self.model_id = model_id
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        # Load the model and tokenizer based on the model_id
         if "meta-llama" in self.model_id:
             self.tokenizer = AutoTokenizer.from_pretrained(model_id)
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -14,19 +18,26 @@ class LLM:
                 torch_dtype=torch.bfloat16,
                 device_map="auto"
             )
+
         elif "InternVL" in self.model_id:
             self.model = AutoModel.from_pretrained(
-                        model_id,
-                        torch_dtype=torch.bfloat16,
-                        low_cpu_mem_usage=True,
-                        use_flash_attn=True,
-                        trust_remote_code=True).eval().cuda()
+                model_id,
+                torch_dtype=torch.bfloat16,
+                low_cpu_mem_usage=True,
+                trust_remote_code=True,
+                device_map="auto"
+            ).eval()
+
             self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True, use_fast=False)
 
         else:
-            self.model = AutoModelForCausalLM.from_pretrained(model_id,torch_dtype="auto", device_map="auto")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                torch_dtype="auto",
+                device_map="auto"
+            )
+
             self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.device = device
 
     @torch.no_grad()
     def generate(self, query):
@@ -63,6 +74,16 @@ class LLM:
         pick the best option from the following: {', '.join(objects)},
         Please return a list of all suitable options as long as they make sense in the format of a Python list in the following format: ```python\n['option1', 'option2', ...]```"""
         res = self.generate(query)
-        res = re.search(r"`{3}python\n(.*)`{3}", res, re.DOTALL).group(1)
-        res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
-        return res
+        
+        # Adjust regex to be more flexible
+        match = re.search(r"```python\s*(\[.*?\])\s*```", res, re.DOTALL)
+        
+        if match:
+            try:
+                res = match.group(1).strip()
+                res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
+                return res
+            except Exception as e:
+                raise ValueError(f"Error evaluating response: {res}") from e
+        else:
+            raise ValueError(f"Failed to parse response: {res}")
