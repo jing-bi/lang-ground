@@ -60,7 +60,7 @@ class LLM:
     def answer(self, query, objects):
         query = f"""
         Extract the object that satisfies the intent of the query or determine the tool that aligns with the purpose of {query}.
-        pick the best option from the following: {', '.join(objects)}, 
+        pick the best option from the following: {', '.join(objects)},
         Please return a list of all suitable options as long as they make sense in the format of a Python list in the following format: ```python\n['option1', 'option2', ...]```"""
         res = self.generate(query)
         res = re.search(r"`{3}python\n(.*)`{3}", res, re.DOTALL).group(1)

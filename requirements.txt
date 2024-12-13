@@ -6,3 +6,4 @@ pillow
 scipy
 gradio
 tenacity
+supervision

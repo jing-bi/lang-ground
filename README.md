@@ -3,7 +3,7 @@
 Localize and keep tracking things based on natural
 language sepecfication is a good idea but remains challenging due to the scarcity of large-scale annotated datasets.
 
-This repository provides a practical solution to identify relevant objects in the view and continuously tracking them, which is particularly beneficial for robotics applications. 
+This repository provides a practical solution to identify relevant objects in the view and continuously tracking them, which is particularly beneficial for robotics applications.
 
 We offer several demos that showcase the following functionalities:
 
@@ -23,4 +23,3 @@ mamba activate lang-ground
 
 pip install -e .
 ```
-

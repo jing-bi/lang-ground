@@ -12,7 +12,7 @@ class OWL:
         model_name = "google/owlv2-large-patch14-ensemble"
         self.processor = Owlv2Processor.from_pretrained(model_name)
         self.model = Owlv2ForObjectDetection.from_pretrained(model_name).to("cuda")
-        self.model.eval()   
+        self.model.eval()
         self.objects_f = Path(__file__).parent / "objects.txt"
         self.objects = [line.strip() for line in self.objects_f.open().readlines()]
         self.device = "cuda"
