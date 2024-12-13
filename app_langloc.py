@@ -31,7 +31,7 @@ with gr.Blocks() as demo:
                 choices=["Qwen/Qwen2.5-7B-Instruct", "OpenGVLab/InternVL2_5-8B", 
                          "OpenGVLab/InternVL2_5-4B", "OpenGVLab/InternVL2_5-2B",
                          "OpenGVLab/InternVL2_5-1B"],
-                value="Qwen/Qwen2.5-7B-Instruct",
+                value="OpenGVLab/InternVL2_5-2B",
                 label="LLM Model",
             )
         with gr.Column(scale=1):
