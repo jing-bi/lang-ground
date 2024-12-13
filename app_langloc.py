@@ -1,12 +1,24 @@
 import gradio as gr
 from langground import LangGround
-import torch
-def create_model(loc_model, llm_model):
-    return LangGround(loc_model=loc_model, llm_model=llm_model)
+
+state = {"loc_model": None, "llm_model": None, "model": None}
 
 
-# Default model
-model = create_model(loc_model="yolo", llm_model="Qwen/Qwen2.5-7B-Instruct")
+def load_model(loc_model: str, llm_model: str) -> LangGround:
+    if (loc_model, llm_model) != (state["loc_model"], state["llm_model"]):
+        gr.Info("Loading models...", duration=2.5)
+        state.update({"model": LangGround(loc_model=loc_model, llm_model=llm_model), "loc_model": loc_model, "llm_model": llm_model})
+        gr.Info("Models loaded!", duration=1)
+    return state["model"]
+
+
+def predict(frame, question: str, threshold: float, loc_model: str, llm_model: str):
+    if not frame or not question.strip():
+        gr.Warning("Please provide both an image and a question")
+        return "", None, None
+
+    model = load_model(loc_model, llm_model)
+    return model.localize(frame, question, threshold=threshold)
 
 
 title = """
@@ -56,18 +68,8 @@ with gr.Blocks() as demo:
         all_bbox_image = gr.Image(label="Found Objects")
         llm_bbox_image = gr.Image(label="Selected Objects")
 
-    def update_model_and_localize(frame, question, threshold, loc_model, llm_model):
-        global model
-        # 删除旧模型并清理显存
-        if model is not None:
-            del model
-            torch.cuda.empty_cache()
-        # 创建新模型
-        model = create_model(loc_model, llm_model)
-        return model.localize(frame, question, threshold=threshold)
-
     submit_btn.click(
-        fn=update_model_and_localize,
+        fn=predict,
         inputs=[frame_input, question_input, threshold_input, loc_model_input, llm_model_input],
         outputs=[objs, all_bbox_image, llm_bbox_image],
     )
