@@ -31,8 +31,10 @@ title = """
 </center>
 """
 
+css = """.my-group {max-width: 600px !important; max-height: 600px !important;}
+         .my-column {display: flex !important; justify-content: center !important; align-items: center !important;}"""
 
-with gr.Blocks() as demo:
+with gr.Blocks(css=css) as demo:
     gr.HTML(title)
 
     with gr.Row():
