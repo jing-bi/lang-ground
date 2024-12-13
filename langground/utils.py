@@ -18,6 +18,10 @@ def image_w_box(image,objxbox):
     masks = np.zeros((len(xyxys), image.shape[0], image.shape[1]), dtype=bool)
     for i, (x1, y1, x2, y2) in enumerate(xyxys):
         masks[i, int(y1):int(y2), int(x1):int(x2)] = labels[i]
+
+    if len(xyxys) == 0:
+        return image
+
     detections = sv.Detections(
         xyxy=xyxys,
         mask=masks,
