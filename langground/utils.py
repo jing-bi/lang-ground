@@ -2,6 +2,7 @@ from PIL import Image
 import supervision as sv
 import numpy as np
 from torch import tensor
+import cv2
 
 def image_w_box(image,objxbox):
 
@@ -33,6 +34,58 @@ def image_w_box(image,objxbox):
     annotated_image = mask_annotator.annotate(scene=annotated_image, detections=detections)
 
     return annotated_image
+
+
+
+def image_w_box_cv2(image, objxbox):
+    if not isinstance(image, np.ndarray):
+        raise ValueError("Input image must be a NumPy array.")
+
+    image_copy = image.copy()
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    
+    height, width, _ = image.shape
+    font_scale = max(0.5, min(width, height) / 1000)  
+    font_thickness = max(1, int(font_scale * 2))  
+
+    for label, boxes in objxbox.items():
+        print(label)
+        print(boxes)
+        for box in boxes:
+            print("box", box)
+
+            x1, y1, x2, y2 = map(int, box.tolist())
+
+            cv2.rectangle(image_copy, (x1, y1), (x2, y2), color=(0, 0, 255), thickness=2)
+
+            label_text = f"{label}"
+
+            (text_width, text_height), baseline = cv2.getTextSize(
+                label_text, font, font_scale, font_thickness
+            )
+
+            text_x1 = x1
+            text_y1 = y1 - text_height - baseline
+            text_x2 = x1 + text_width
+            text_y2 = y1
+
+            cv2.rectangle(image_copy, (text_x1, text_y1), (text_x2, text_y2), color=(255, 255, 255), thickness=-1)
+
+            cv2.putText(
+                image_copy,
+                label_text,
+                (x1, y1 - baseline),
+                font,
+                font_scale,
+                color=(0, 0, 255),
+                thickness=font_thickness,
+                lineType=cv2.LINE_AA,
+            )
+
+    return image_copy
+
+yolo_class = {0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light', 10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench', 14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow', 20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack', 25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee', 30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat', 35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket', 39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife', 44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich', 49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza', 54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant', 59: 'bed', 60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop', 64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave', 69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book', 74: 'clock', 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier', 79: 'toothbrush'}
 
 if __name__ == '__main__':
     image = Image.open("assets/demo.jpeg")
