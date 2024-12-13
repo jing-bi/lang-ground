@@ -54,7 +54,6 @@ class LLM:
             generated_ids = [output_ids[len(input_ids) :] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
 
             response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        print("response",response)
         return response
 
     @tenacity.retry(stop=tenacity.stop_after_delay(10))
@@ -65,5 +64,5 @@ class LLM:
         Please return a list of all suitable options as long as they make sense in the format of a Python list in the following format: ```python\n['option1', 'option2', ...]```"""
         res = self.generate(query)
         res = re.search(r"`{3}python\n(.*)`{3}", res, re.DOTALL).group(1)
-        print("res",res)
-        return eval(res)
+        res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
+        return res
