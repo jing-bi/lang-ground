@@ -18,4 +18,5 @@ class LangGround:
         locobjxbox = {k: v for k, v in objxbox.items() if k in locobjs}
         all_box_image = image_w_box(frame, objxbox)
         llm_box_image = image_w_box(frame, locobjxbox)
-        return ", ".join(locobjs), all_box_image, llm_box_image
+        texts = [(text, str(idx)) for idx, text in enumerate(locobjs)]
+        return texts, all_box_image, llm_box_image

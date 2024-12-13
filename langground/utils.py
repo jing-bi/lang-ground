@@ -4,17 +4,45 @@ import numpy as np
 from torch import tensor
 import cv2
 
+colors = sv.ColorPalette.from_hex(
+    [
+        "#a1c9f4",
+        "#ffb482",
+        "#8de5a1",
+        "#ff9f9b",
+        "#d0bbff",
+        "#debb9b",
+        "#fab0e4",
+        "#cfcfcf",
+        "#fffea3",
+        "#b9f2f0",
+        "#a1c9f4",
+        "#ffb482",
+        "#8de5a1",
+        "#ff9f9b",
+        "#d0bbff",
+        "#debb9b",
+        "#fab0e4",
+        "#cfcfcf",
+        "#fffea3",
+        "#b9f2f0",
+    ]
+)
+
+text_palette = {str(idx): colors.by_idx(idx).as_hex() for idx in range(50)}
+
+
 def image_w_box(image,objxbox):
 
-    box_annotator = sv.BoxCornerAnnotator()
-    label_annotator = sv.LabelAnnotator()
-    mask_annotator = sv.MaskAnnotator()
+    box_annotator = sv.BoxCornerAnnotator(thickness=10, corner_length=30, color=colors)
+    label_annotator = sv.LabelAnnotator(color=colors)
+    mask_annotator = sv.MaskAnnotator(opacity=0.2, color=colors)
 
     xyxys = np.array([v.tolist() for boxes in objxbox.values() for v in boxes])
-    labels = [l for l, boxes in objxbox.items() for v in boxes]
-    unique_labels = list(objxbox.keys())
-    class_id_map = {label: idx for idx, label in enumerate(unique_labels)}
-    class_id = [class_id_map[label] for label in labels]
+    unique_labels = sorted(objxbox.keys())
+    class_id_map = dict(enumerate(unique_labels))
+    labels = [l for l, boxes in objxbox.items() for _ in boxes]
+    class_id = [list(class_id_map.values()).index(label) for label in labels]
 
     masks = np.zeros((len(xyxys), image.shape[0], image.shape[1]), dtype=bool)
     for i, (x1, y1, x2, y2) in enumerate(xyxys):
@@ -22,18 +50,19 @@ def image_w_box(image,objxbox):
 
     if len(xyxys) == 0:
         return image
-
     detections = sv.Detections(
         xyxy=xyxys,
         mask=masks,
         class_id=np.array(class_id),
     )
-
-    annotated_image = box_annotator.annotate(scene=image.copy(), detections=detections)
+    # Convert RGB to BGR for annotation
+    image_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    # After annotation, convert back to RGB
+    annotated_image = box_annotator.annotate(scene=image_bgr.copy(), detections=detections)
     annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections, labels=labels)
     annotated_image = mask_annotator.annotate(scene=annotated_image, detections=detections)
 
-    return annotated_image
+    return cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
 
 
 def image_w_box_cv2(image, objxbox):
@@ -49,8 +78,6 @@ def image_w_box_cv2(image, objxbox):
     font_thickness = max(1, int(font_scale * 2))  
 
     for label, boxes in objxbox.items():
-        print(label)
-        print(boxes)
         for box in boxes:
             print("box", box)
 

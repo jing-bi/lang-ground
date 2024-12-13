@@ -1,14 +1,15 @@
 import gradio as gr
-from langground import LangGround
+from langground import LangGround, text_palette
+
 
 state = {"loc_model": None, "llm_model": None, "model": None}
 
 
 def load_model(loc_model: str, llm_model: str) -> LangGround:
     if (loc_model, llm_model) != (state["loc_model"], state["llm_model"]):
-        gr.Info("Loading models...", duration=2.5)
+        gr.Info("Loading models...", duration=5)
         state.update({"model": LangGround(loc_model=loc_model, llm_model=llm_model), "loc_model": loc_model, "llm_model": llm_model})
-        gr.Info("Models loaded!", duration=1)
+        gr.Info("Models loaded!", duration=2.5)
     return state["model"]
 
 
@@ -29,6 +30,8 @@ title = """
 
 </center>
 """
+
+
 with gr.Blocks() as demo:
     gr.HTML(title)
 
@@ -61,7 +64,7 @@ with gr.Blocks() as demo:
                     )
             threshold_input = gr.Slider(minimum=0, maximum=1, value=0.4, step=0.1, label="Threshold")
             question_input = gr.Textbox(lines=2, placeholder="Enter your question here", label="Question")
-            objs = gr.Textbox(label="Answer")
+            objs = gr.Highlightedtext(show_legend=False, show_inline_category=False, color_map=text_palette, label="Objects Found")
             submit_btn = gr.Button("Submit")
 
     with gr.Row():
