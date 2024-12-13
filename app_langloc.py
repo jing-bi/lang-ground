@@ -86,4 +86,5 @@ with gr.Blocks(css=css) as demo:
         ],
         inputs=[frame_input, question_input],
     )
-demo.queue().launch()
+if __name__ == "__main__":
+    demo.launch()
