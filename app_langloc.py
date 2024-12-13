@@ -22,12 +22,12 @@ with gr.Blocks() as demo:
             threshold_input = gr.Slider(minimum=0, maximum=1, value=0.4, step=0.1, label="Threshold")
             question_input = gr.Textbox(lines=2, placeholder="Enter your question here", label="Question")
             objs = gr.Textbox(label="Answer")
+            submit_btn = gr.Button("Submit")
 
     with gr.Row():
         all_bbox_image = gr.Image(label="Found Objects")
         llm_bbox_image = gr.Image(label="Selected Objects")
 
-    submit_btn = gr.Button("Submit")
     submit_btn.click(
         fn=lambda f, q, t: model.localize(f, q, threshold=t),
         inputs=[frame_input, question_input, threshold_input],
