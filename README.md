@@ -14,7 +14,7 @@ Try our demo to experience an interesting use case: When analyzing food items, t
 - For food nearing expiration: Suggests storing in the cabinet
 - For expired food: Recommends disposal in the trash can
 
-![langloc](/assets/langloc.png)
+![langloc](/assets/langloc.jpg)
 
 
 
