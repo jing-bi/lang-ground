@@ -428,7 +428,7 @@ river boat
 tux
 book
 cistern
-cigar/cigarette 
+cigar/cigarette
 tennis
 pencil sharpener
 tableware
@@ -635,7 +635,7 @@ cattle
 high heels
 strainer
 race car
-formula 1 
+formula 1
 yak
 earplug
 noseband (for animals)
@@ -1166,7 +1166,7 @@ bowler hat
 indoor rower
 vehicle
 shellfish
-table tennis 
+table tennis
 cargo ship
 pencil
 freshener
