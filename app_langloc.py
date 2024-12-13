@@ -33,5 +33,12 @@ with gr.Blocks() as demo:
         inputs=[frame_input, question_input, threshold_input],
         outputs=[objs, all_bbox_image, llm_bbox_image],
     )
-    examples = gr.Examples(examples=[["assets/demo.jpeg", "I'm thirsty"]], inputs=[frame_input, question_input])
+    examples = gr.Examples(
+        examples=[
+            ["assets/demo.jpeg", "I'm thirsty"],
+            ["assets/kitchen.webp", "The food has expired and is no longer safe to eat."],
+            ["assets/kitchen.webp", "The food is about to expire."],
+        ],
+        inputs=[frame_input, question_input],
+    )
 demo.queue().launch()
