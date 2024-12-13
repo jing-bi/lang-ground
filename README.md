@@ -7,10 +7,27 @@ This repository provides a practical solution to identify relevant objects in th
 
 We offer several demos that showcase the following functionalities:
 
-1. **Lang Localize:** Identify and locate objects based on natural language queries.
-2. **Lang Ground (Localize + Track):** Not only find but also continuously track objects of interest
+## Language Localize
+Identify and locate objects based on natural language queries.
 
-We make sure this repo is open box use and pave the way for other projects.
+Try our demo to experience an interesting use case: When analyzing food items, the model demonstrates contextual understanding:
+- For food nearing expiration: Suggests storing in the cabinet
+- For expired food: Recommends disposal in the trash can
+
+![langloc](/assets/langloc.jpg)
+
+
+
+
+## **Lang Ground (Localize + Track):** 
+
+Not only find but also continuously track objects of interest
+
+We prioritize making this project highly accessible and customizable:
+
+- **Open Box Design:** All components are modular and well-documented for easy understanding
+- **Customizable Pipeline:** Easily adapt the system for different use cases
+- **Extensible Framework:** Simple integration with other vision or language models
 
 
 ## 🛠️ Install
@@ -23,3 +40,13 @@ mamba activate lang-ground
 
 pip install -e .
 ```
+## Acknowledgments
+
+This project is built upon and inspired by the following repositories:
+
+- [Segment-Anything](https://github.com/facebookresearch/segment-anything-2)
+- [Supervision](https://github.com/roboflow/supervision)
+
+## License
+
+This project is licensed under the Apache 2.0 License
