@@ -74,16 +74,17 @@ class LLM:
         pick the best option from the following: {', '.join(objects)},
         Please return a list of all suitable options as long as they make sense in the format of a Python list in the following format: ```python\n['option1', 'option2', ...]```"""
         res = self.generate(query)
-        
-        # Adjust regex to be more flexible
-        match = re.search(r"```python\s*(\[.*?\])\s*```", res, re.DOTALL)
-        
+        match = re.search(r"`{3}python\\n(.*)`{3}", res, re.DOTALL)
         if match:
-            try:
-                res = match.group(1).strip()
+            res = match.group(1)
+            res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
+            return res
+        else:
+            # Try to extract content directly from brackets []
+            match_brackets = re.search(r"\[(.*?)\]", res, re.DOTALL)
+            if match_brackets:
+                res = match_brackets.group(0)  # Include brackets for eval
                 res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
                 return res
-            except Exception as e:
-                raise ValueError(f"Error evaluating response: {res}") from e
-        else:
-            raise ValueError(f"Failed to parse response: {res}")
+            else:
+                raise ValueError(f"Failed to parse response: {res}")
