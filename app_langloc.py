@@ -78,13 +78,14 @@ with gr.Blocks(css=css) as demo:
         inputs=[frame_input, question_input, threshold_input, loc_model_input, llm_model_input],
         outputs=[objs, all_bbox_image, llm_bbox_image],
     )
-    examples = gr.Examples(
-        examples=[
-            ["assets/demo.jpeg", "I'm thirsty"],
-            ["assets/kitchen.webp", "The food has expired and is no longer safe to eat."],
-            ["assets/kitchen.webp", "The food is about to expire."],
-        ],
-        inputs=[frame_input, question_input],
-    )
+    with gr.Row():
+        examples = gr.Examples(
+            examples=[
+                ["assets/demo.jpeg", "I'm thirsty"],
+                ["assets/kitchen.webp", "The food has expired and is no longer safe to eat."],
+                ["assets/kitchen.webp", "The food is about to expire."],
+            ],
+            inputs=[frame_input, question_input],
+        )
 if __name__ == "__main__":
     demo.launch()
