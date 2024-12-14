@@ -1,3 +1,9 @@
+---
+title: lang-ground
+app_file: app_langloc.py
+sdk: gradio
+sdk_version: 4.33.0
+---
 # Language Grounding
 
 Localize and keep tracking things based on natural
