@@ -1,7 +1,7 @@
 torch
 transformers
 opencv-python
-tenacity
+tenacity    
 accelerate
 pillow
 scipy
@@ -10,3 +10,4 @@ supervision
 ultralytics
 einops
 timm
+sam-2 @ git+https://github.com/facebookresearch/segment-anything-2@722d1d15111c689908aeeb82d49a57780aac5153

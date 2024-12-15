@@ -9,7 +9,6 @@ class LLM:
 
         self.model_id = model_id
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
         # Load the model and tokenizer based on the model_id
         if "meta-llama" in self.model_id:
             self.tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -67,7 +66,7 @@ class LLM:
             response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
         return response
 
-    @tenacity.retry(stop=tenacity.stop_after_delay(10))
+    @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     def answer(self, query, objects):
         query = f"""
         Extract the object that satisfies the intent of the query or determine the tool that aligns with the purpose of {query}.
