@@ -89,19 +89,10 @@ class SAM2StreamPredictor(SAM2VideoPredictor):
         self.state["obj_id_to_idx"] = OrderedDict()
         self.state["obj_idx_to_id"] = OrderedDict()
         self.state["obj_ids"] = []
-        self.state["output_dict"] = {
-            "cond_frame_outputs": {},
-            "non_cond_frame_outputs": {},
-        }
+        self.state["frames_tracked_per_obj"] = {}
         self.state["output_dict_per_obj"] = {}
         self.state["temp_output_dict_per_obj"] = {}
-        self.state["consolidated_frame_inds"] = {
-            "cond_frame_outputs": set(),
-            "non_cond_frame_outputs": set(),
-        }
         self.state["tracking_has_started"] = False
-        self.state["frames_already_tracked"] = {}
-
         self.frame_idx = 0
         img, width, height = self._process_img(img)
         self.state["images"].append(img)
@@ -123,26 +114,43 @@ class SAM2StreamPredictor(SAM2VideoPredictor):
         self.state["num_frames"] = len(self.state["images"])
         if not self.state["tracking_has_started"]:
             self.propagate_in_video_preflight(self.state)
-        output_dict = self.state["output_dict"]
-        obj_ids = self.state["obj_ids"]
+
         batch_size = self._get_obj_num(self.state)
-        compact_current_out, pred_masks_gpu = self._run_single_frame_inference(
-            self.state,
-            output_dict,
-            self.frame_idx,
-            batch_size,
-            is_init_cond_frame=False,
-            point_inputs=None,
-            mask_inputs=None,
-            reverse=False,
-            run_mem_encoder=True,
-            prev_sam_mask_logits=None,
-        )
-        output_dict["non_cond_frame_outputs"][self.frame_idx] = compact_current_out
-        self._add_output_per_object(self.state, self.frame_idx, compact_current_out, "non_cond_frame_outputs")
-        self.state["frames_already_tracked"][self.frame_idx] = {"reverse": False}
-        _, video_res_masks = self._get_orig_video_res_output(self.state, pred_masks_gpu)
-        return obj_ids, video_res_masks
+        pred_masks_per_obj = [None] * batch_size
+        for obj_idx in range(batch_size):
+            obj_output_dict = self.state["output_dict_per_obj"][obj_idx]
+            if self.frame_idx in obj_output_dict["cond_frame_outputs"]:
+                storage_key = "cond_frame_outputs"
+                current_out = obj_output_dict[storage_key][self.frame_idx]
+                device = self.state["device"]
+                pred_masks = current_out["pred_masks"].to(device, non_blocking=True)
+                if self.clear_non_cond_mem_around_input:
+                    # clear non-conditioning memory of the surrounding frames
+                    self._clear_obj_non_cond_mem_around_input(self.state, self.frame_idx, obj_idx)
+            else:
+                storage_key = "non_cond_frame_outputs"
+                current_out, pred_masks = self._run_single_frame_inference(
+                    inference_state=self.state,
+                    output_dict=obj_output_dict,
+                    frame_idx=self.frame_idx,
+                    batch_size=1,
+                    is_init_cond_frame=False,
+                    point_inputs=None,
+                    mask_inputs=None,
+                    reverse=False,
+                    run_mem_encoder=True,
+                )
+                obj_output_dict[storage_key][self.frame_idx] = current_out
+
+            self.state["frames_tracked_per_obj"][obj_idx][self.frame_idx] = {"reverse": False}
+            pred_masks_per_obj[obj_idx] = pred_masks
+        if len(pred_masks_per_obj) > 1:
+            all_pred_masks = torch.cat(pred_masks_per_obj, dim=0)
+        else:
+            all_pred_masks = pred_masks_per_obj[0]
+            _, video_res_masks = self._get_orig_video_res_output(self.state, all_pred_masks)
+        _, video_res_masks = self._get_orig_video_res_output(self.state, all_pred_masks)
+        return self.state["obj_ids"], video_res_masks
 
     def _process_img(self, img, image_size=1024, img_mean=(0.485, 0.456, 0.406), img_std=(0.229, 0.224, 0.225)):
         if isinstance(img, np.ndarray):
