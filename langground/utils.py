@@ -65,6 +65,31 @@ def image_w_box(image,objxbox):
     return cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
 
 
+def visualize_masks(frame: np.ndarray, masks, obj_ids, obj_to_question) -> np.ndarray:
+    """Visualize masks on the frame with different colors for each object."""
+    result = frame.copy()
+    colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255), (255, 0, 255)]
+
+    for mask, obj_id in zip(masks, obj_ids):
+        q_idx = obj_to_question[obj_id]
+        color = colors[q_idx % len(colors)]
+        mask_colored = np.zeros_like(frame)
+        mask_colored[mask.squeeze()] = color
+        result = cv2.addWeighted(result, 1, mask_colored, 0.5, 0)
+
+    return result
+
+
+def anno_frame(frame, segments, query, obj_to_question):
+
+    if segments:
+        masks = list(segments.values())
+        labels = list(segments.keys())
+        frame = visualize_masks(frame, masks, labels, obj_to_question)
+
+    return frame
+
+
 def image_w_box_cv2(image, objxbox):
     if not isinstance(image, np.ndarray):
         raise ValueError("Input image must be a NumPy array.")
