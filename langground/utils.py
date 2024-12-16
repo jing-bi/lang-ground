@@ -83,6 +83,7 @@ def image_w_mask(image, segments):
     for idx, mask in enumerate(masks_array):
         y_idx, x_idx = np.where(mask)
         if len(y_idx) == 0 or len(x_idx) == 0:
+            class_id.pop(idx)
             masks_array = np.delete(masks_array, idx, axis=0)
             continue
         x1, y1 = min(x_idx), min(y_idx)

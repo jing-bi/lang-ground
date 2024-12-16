@@ -19,9 +19,20 @@ Try our demo to experience an interesting use case: When analyzing food items, t
 
 
 
-## **Lang Ground (Localize + Track):** 
-
+## Language Ground (Localize + Track)
 Not only find but also continuously track objects of interest
+<video width="100%" controls>
+    <source src="/assets/langgnd.mp4" type="video/mp4">
+</video>
+
+The key component for this is above localization plus a elegent implemenetation of a stream SAM2 that support to the lastest version.
+
+
+
+
+
+
+
 
 We prioritize making this project highly accessible and customizable:
 

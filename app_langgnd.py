@@ -88,7 +88,7 @@ class Worker:
             self.frame_idx += 1
             processed = self.process_frame(self.latest_frame)
             if self.frame_idx % self.fps == 0:
-                gr.Info(f"frame {self.frame_idx} processed")
+                gr.Info(f"Processed {self.frame_idx//self.fps} seconds")
             buffer.append(processed)
             if self.status == "play" and len(buffer) > self.fps:
                 yield self.yield_buffer(buffer)
