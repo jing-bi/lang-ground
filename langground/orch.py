@@ -1,7 +1,7 @@
 from .localizer import build_localizer
 from .tracker import SAM2StreamPredictor
 from .llm import LLM
-from .utils import image_w_box, anno_frame
+from .utils import image_w_box, image_w_mask
 import numpy as np
 
 class LangGround:
@@ -20,34 +20,43 @@ class LangGround:
             self.global_boxes = []
             self.obj_to_question = {}
 
-    def localize(self, frame, question, **kwargs):
+    def localize(self, frame, question, return_type="vis", **kwargs):
         frame = np.array(frame)
         objxbox = self.loc.localize(frame, kwargs.get("threshold", 0.5))
         locobjs = self.llm.answer(question, objxbox.keys())
+        locobjs = sorted(locobjs)
         locobjxbox = {k: v for k, v in objxbox.items() if k in locobjs}
-        all_box_image = image_w_box(frame, objxbox)
-        llm_box_image = image_w_box(frame, locobjxbox)
-        texts = [(text, str(idx)) for idx, text in enumerate(locobjs)]
-        if self.tracker is not None:
+        loc_objsxids = [(text, str(idx)) for idx, text in enumerate(locobjs)]
+
+        if return_type == "vis":
+            all_box_image = image_w_box(frame, objxbox)
+            llm_box_image = image_w_box(frame, locobjxbox)
+            return loc_objsxids, all_box_image, llm_box_image
+        else:
+            return loc_objsxids, objxbox, locobjxbox
+
+    def track(self, frame, question=None, return_type="vis", **kwargs):
+        segments = {}
+        if question:
+            loc_objsxids, _, locobjxbox = self.localize(frame, question, return_type="data", **kwargs)
             self.status = "tracking"
             self.questions.add(question)
             self.tracker.initialize(frame)
-            qidx = len(self.questions)
-            for obj in locobjs:
-                for box in objxbox[obj]:
-                    self.global_boxes.append(box)
-                    obj_id = len(self.global_boxes)
-                    frame_idx, obj_ids, video_res_masks = self.tracker.add_new_points_or_box(
+
+            for obj_id, obj in enumerate(locobjxbox):
+                for box in locobjxbox[obj]:
+                    _, obj_ids, mask_logits = self.tracker.add_new_points_or_box(
                         inference_state=self.tracker.state, frame_idx=0, obj_id=obj_id, box=box.cpu().numpy()
                     )
                     print(f"Adding {obj} to tracking with id {obj_id}")
-                    self.obj_to_question[obj_id] = qidx
-        return texts, all_box_image, llm_box_image
-
-    def track(self, fidx, frame, question, **kwargs):
-        if self.status == "tracking":
+            segments = {obj_id: (mask_logits > 0.0).cpu().numpy() for obj_id, mask_logits in zip(obj_ids, mask_logits)}
+            return loc_objsxids, image_w_mask(frame, segments)
+        elif self.status == "tracking":
             obj_ids, mask_logits = self.tracker.track(frame)
-            self.video_segments[fidx] = {obj_id: (mask_logits > 0.0).cpu().numpy() for obj_id, mask_logits in zip(obj_ids, mask_logits)}
-
-        segments = self.video_segments.get(fidx, {})
-        return anno_frame(frame, segments, question, self.obj_to_question)
+            segments = {obj_id: (mask_logits > 0.0).cpu().numpy() for obj_id, mask_logits in zip(obj_ids, mask_logits)}
+            try:
+                return image_w_mask(frame, segments)
+            except:
+                return image_w_mask(frame, segments)
+        else:
+            return frame
