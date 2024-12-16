@@ -30,7 +30,10 @@ colors = sv.ColorPalette.from_hex(
 )
 
 text_palette = {str(idx): colors.by_idx(idx).as_hex() for idx in range(50)}
-
+get_gr_video_current_time = """async (video, _) => {
+    const videoEl = document.querySelector("#gr_video video");
+    return [videoEl.currentTime];
+}"""
 
 def image_w_box(image,objxbox):
 
@@ -65,29 +68,36 @@ def image_w_box(image,objxbox):
     return cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
 
 
-def visualize_masks(frame: np.ndarray, masks, obj_ids, obj_to_question) -> np.ndarray:
-    """Visualize masks on the frame with different colors for each object."""
-    result = frame.copy()
-    colors = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255), (255, 0, 255)]
+def image_w_mask(image, segments):
+    if not segments:
+        return image
+    mask_annotator = sv.MaskAnnotator(opacity=0.8, color=colors)
+    masks = np.stack([mask.squeeze() for mask in segments.values()])
+    class_id = list(segments.keys())
 
-    for mask, obj_id in zip(masks, obj_ids):
-        q_idx = obj_to_question[obj_id]
-        color = colors[q_idx % len(colors)]
-        mask_colored = np.zeros_like(frame)
-        mask_colored[mask.squeeze()] = color
-        result = cv2.addWeighted(result, 1, mask_colored, 0.5, 0)
+    # Create dummy xyxy boxes from mask bounds
+    xyxys = []
+    masks_array = np.stack(masks)
+    masks_array = np.transpose(masks_array, (0, 2, 1)) if masks_array.shape[1] != image.shape[0] else masks_array
 
-    return result
+    for idx, mask in enumerate(masks_array):
+        y_idx, x_idx = np.where(mask)
+        if len(y_idx) == 0 or len(x_idx) == 0:
+            masks_array = np.delete(masks_array, idx, axis=0)
+            continue
+        x1, y1 = min(x_idx), min(y_idx)
+        x2, y2 = max(x_idx), max(y_idx)
+        xyxys.append([x1, y1, x2, y2])
+    if len(xyxys) == 0:
+        return image
+    detections = sv.Detections(
+        xyxy=np.array(xyxys),
+        mask=masks_array,
+        class_id=np.array(class_id),
+    )
 
-
-def anno_frame(frame, segments, query, obj_to_question):
-
-    if segments:
-        masks = list(segments.values())
-        labels = list(segments.keys())
-        frame = visualize_masks(frame, masks, labels, obj_to_question)
-
-    return frame
+    annotated_image = mask_annotator.annotate(scene=image.copy(), detections=detections)
+    return annotated_image
 
 
 def image_w_box_cv2(image, objxbox):
