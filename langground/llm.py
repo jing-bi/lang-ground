@@ -1,3 +1,4 @@
+import os
 import re
 import tenacity
 import torch
@@ -28,7 +29,12 @@ class LLM:
             ).eval()
 
             self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True, use_fast=False)
+        elif "gpt" in self.model_id:
+            from openai import OpenAI
 
+            self.model = OpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+            )
         else:
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id,
@@ -55,6 +61,12 @@ class LLM:
         elif "InternVL" in self.model_id:
             generation_config = dict(max_new_tokens=1024, do_sample=True)
             response = self.model.chat(self.tokenizer, None, query, generation_config, history=None, return_history=False)
+        if "gpt" in self.model_id:
+            chat_completion = self.model.chat.completions.create(
+                messages=[{"role": "user", "content": query}],
+                model="gpt-4o-mini",
+            )
+            response = chat_completion.choices[0].message.content
         else:
             messages = [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": query}]
             text = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -76,14 +88,14 @@ class LLM:
         match = re.search(r"`{3}python\\n(.*)`{3}", res, re.DOTALL)
         if match:
             res = match.group(1)
-            res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
+            res = [r.replace("-", " ").replace("_", " ") for r in eval(res)]
             return res
         else:
             # Try to extract content directly from brackets []
             match_brackets = re.search(r"\[(.*?)\]", res, re.DOTALL)
             if match_brackets:
                 res = match_brackets.group(0)  # Include brackets for eval
-                res = [r.translate(str.maketrans("", "", "_-")) for r in eval(res)]
+                res = [r.replace("-", " ").replace("_", " ") for r in eval(res)]
                 return res
             else:
                 raise ValueError(f"Failed to parse response: {res}")
