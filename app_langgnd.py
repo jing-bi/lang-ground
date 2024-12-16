@@ -3,7 +3,7 @@ from pathlib import Path
 import uuid
 import cv2
 import gradio as gr
-from langground import LangGround
+from langground import LangGround, get_gr_video_current_time, text_palette
 
 
 state = {"loc_model": None, "llm_model": None, "model": None}
@@ -13,15 +13,20 @@ style = """
     #gr_chatbot {max-height: 50vh;}
 """
 
-get_gr_video_current_time = """async (video, _) => {
-  const videoEl = document.querySelector("#gr_video video");
-  return [videoEl.currentTime];
-}"""
+
+title = """
+<center> 
+
+<h1>  👌 Language Grounding </h1>
+<b> Upload a video and ask questions about objects in the video. </b>
+
+</center>
+"""
 
 
 class Worker:
     def __init__(self):
-        self.grounder = LangGround(track=True)
+        self.grounder = LangGround(llm_model="gpt-40-mini", track=True)
         self.reset()
 
     def reset(self):
@@ -38,15 +43,14 @@ class Worker:
             self.status = action
         self.stamp = timestamp
 
-    def process_frame(self, fidx, frame):
-        return self.grounder.track(fidx, frame, self.questions[-1])
+    def process_frame(self, frame):
+        return self.grounder.track(frame)
 
-    def response(self, message, history):
-        gr.Info(f"Start processing question: {message}")
+    def response(self, message):
+        gr.Info(f"Start with question: {message}")
         self.questions.append(message)
-        answer, _, _ = self.grounder.localize(self.latest_frame, message)
-        gr.Info(f"Answer: {answer}")
-        return ", ".join([i[0] for i in answer])
+        objs, _ = self.grounder.track(self.latest_frame, message, threshold=0.25)
+        return objs
 
     def create_output(self, codec, fps, width, height):
         path = Path(__file__).parent / "cache"
@@ -73,9 +77,8 @@ class Worker:
         self.create_output(self.codec, self.fps, self.w, self.h)
         self.frame_idx = 0
         while True:
-            while self.frame_idx >= self.stamp * self.fps:
+            while self.frame_idx - 1 >= self.stamp * self.fps:
                 if buffer and self.status == "pause":
-                    print("clear buffer pause")
                     yield self.yield_buffer(buffer)
 
             ret, frame = cap.read()
@@ -83,8 +86,7 @@ class Worker:
             if not ret:
                 break
             self.frame_idx += 1
-            processed = self.process_frame(self.frame_idx, self.latest_frame)
-            print(f"frame {self.frame_idx} processed")
+            processed = self.process_frame(self.latest_frame)
             if self.frame_idx % self.fps == 0:
                 gr.Info(f"frame {self.frame_idx} processed")
             buffer.append(processed)
@@ -97,6 +99,7 @@ worker = Worker()
 
 
 with gr.Blocks(css=style) as demo:
+    gr.HTML(title)
     with gr.Row():
         with gr.Column():
             gr_video = gr.Video(label="video stream", elem_id="gr_video", visible=True, sources=["upload"], autoplay=False)
@@ -105,16 +108,16 @@ with gr.Blocks(css=style) as demo:
                 label="Processed Video", elem_id="gr_processed_video", visible=True, interactive=False, streaming=True, autoplay=True
             )
         with gr.Column():
-            gr_chat_interface = gr.ChatInterface(
-                fn=worker.response, chatbot=gr.Chatbot(elem_id="gr_chatbot", label="chatbot", render=False)
-            )
+            gr_text = gr.Textbox(label="Question", placeholder="Ask about objects in the video...")
+            objs = gr.Highlightedtext(show_legend=False, show_inline_category=False, color_map=text_palette, label="Objects Found")
+            gr_submit = gr.Button("Submit")
+            gr_submit.click(fn=worker.response, inputs=[gr_text], outputs=[objs])
 
         gr_video_time = gr.Number(value=0, visible=False)
         gr_video.change(worker.process_video, inputs=[gr_video], outputs=[gr_processed_video])
-        # gr_video.select(worker.process_video, inputs=[gr_video], outputs=[gr_processed_video])
         gr.Timer(value=1).tick(partial(worker.log, "auto"), inputs=[gr_video_time], js=get_gr_video_current_time)
         gr_video.play(partial(worker.log, "play"), inputs=[gr_video_time], js=get_gr_video_current_time)
         gr_video.pause(partial(worker.log, "pause"), inputs=[gr_video_time], js=get_gr_video_current_time)
     gr.Examples(examples=[["assets/tools.mp4"]], inputs=[gr_video])
-demo.queue()
-demo.launch(share=False, server_name="0.0.0.0")
+if __name__ == "__main__":
+    demo.launch()
