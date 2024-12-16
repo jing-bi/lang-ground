@@ -8,7 +8,7 @@ state = {"loc_model": None, "llm_model": None, "model": None}
 def load_model(loc_model: str, llm_model: str) -> LangGround:
     if (loc_model, llm_model) != (state["loc_model"], state["llm_model"]):
         gr.Info("Loading models...", duration=5)
-        state.update({"model": LangGround(loc_model=loc_model, llm_model=llm_model), "loc_model": loc_model, "llm_model": llm_model})
+        state.update({"model": LangGround(loc=loc_model, llm=llm_model), "loc_model": loc_model, "llm_model": llm_model})
         gr.Info("Models loaded!", duration=2.5)
     return state["model"]
 

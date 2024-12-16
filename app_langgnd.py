@@ -26,7 +26,7 @@ title = """
 
 class Worker:
     def __init__(self):
-        self.grounder = LangGround(llm_model="gpt-40-mini", track=True)
+        self.grounder = LangGround(llm="gpt-40-mini", track=True)
         self.reset()
 
     def reset(self):

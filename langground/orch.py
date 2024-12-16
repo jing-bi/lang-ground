@@ -1,17 +1,18 @@
+import threading
 from .localizer import build_localizer
 from .tracker import SAM2StreamPredictor
 from .llm import LLM
 from .utils import image_w_box, image_w_mask
 import numpy as np
+import concurrent.futures
 
 class LangGround:
 
-    def __init__(self, loc_model="owl", llm_model="Qwen/Qwen2.5-7B-Instruct", track=False):
-
-        self.loc = build_localizer(loc_model)
-        self.llm = LLM(llm_model)
+    def __init__(self, loc="owl", llm="Qwen/Qwen2.5-7B-Instruct", track=True):
+        self.llm = LLM(llm)
+        self.loc = build_localizer(loc)
         self.tracker = None
-        if track:
+        if track == "sam2":
             print("Tracking enabled")
             self.tracker = SAM2StreamPredictor.from_pretrained("facebook/sam2.1-hiera-small")
             self.status = None
@@ -20,10 +21,25 @@ class LangGround:
             self.global_boxes = []
             self.obj_to_question = {}
 
-    def localize(self, frame, question, return_type="vis", **kwargs):
+        self.obj_latest = []
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+    def select(self, objs, question, block=False):
+        def _select():
+            return self.llm.answer(question, objs)
+
+        if block:
+            self.obj_latest = _select()
+        elif not hasattr(self, "future") or self.future.done():
+            self.future = self.executor.submit(_select)
+            self.obj_latest = self.future.result()
+
+        return self.obj_latest
+
+    def localize(self, frame, question, return_type="vis", block=True, **kwargs):
         frame = np.array(frame)
         objxbox = self.loc.localize(frame, kwargs.get("threshold", 0.5))
-        locobjs = self.llm.answer(question, objxbox.keys())
+        locobjs = self.select(question, objxbox.keys(), block=block)
         locobjs = sorted(locobjs)
         locobjxbox = {k: v for k, v in objxbox.items() if k in locobjs}
         loc_objsxids = [(text, str(idx)) for idx, text in enumerate(locobjs)]
@@ -54,9 +70,6 @@ class LangGround:
         elif self.status == "tracking":
             obj_ids, mask_logits = self.tracker.track(frame)
             segments = {obj_id: (mask_logits > 0.0).cpu().numpy() for obj_id, mask_logits in zip(obj_ids, mask_logits)}
-            try:
-                return image_w_mask(frame, segments)
-            except:
-                return image_w_mask(frame, segments)
+            return image_w_mask(frame, segments)
         else:
             return frame
