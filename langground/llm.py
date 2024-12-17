@@ -6,7 +6,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 
 
 class LLM:
-    def __init__(self, model_id="Qwen/Qwen2.5-7B-Instruct",):
+    def __init__(self, model_id="Qwen/Qwen2.5-7B-Instruct"):
 
         self.model_id = model_id
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -61,7 +61,7 @@ class LLM:
         elif "InternVL" in self.model_id:
             generation_config = dict(max_new_tokens=1024, do_sample=True)
             response = self.model.chat(self.tokenizer, None, query, generation_config, history=None, return_history=False)
-        if "gpt" in self.model_id:
+        elif "gpt" in self.model_id:
             chat_completion = self.model.chat.completions.create(
                 messages=[{"role": "user", "content": query}],
                 model="gpt-4o-mini",
