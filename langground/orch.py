@@ -26,12 +26,11 @@ class LangGround:
 
     def select(self, question, objs, block=False):
         def _select():
-            return self.llm.answer(question, objs)
+            self.obj_latest = self.llm.answer(question, objs)
         if block:
-            self.obj_latest = _select()
+            _select()
         elif not hasattr(self, "future") or self.future.done():
             self.future = self.executor.submit(_select)
-            self.obj_latest = self.future.result()
 
         return self.obj_latest
 
