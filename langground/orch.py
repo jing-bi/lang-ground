@@ -24,10 +24,9 @@ class LangGround:
         self.obj_latest = []
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
-    def select(self, objs, question, block=False):
+    def select(self, question, objs, block=False):
         def _select():
             return self.llm.answer(question, objs)
-
         if block:
             self.obj_latest = _select()
         elif not hasattr(self, "future") or self.future.done():
