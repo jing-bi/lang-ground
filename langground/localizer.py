@@ -8,10 +8,10 @@ from ultralytics import YOLO
 
 
 def build_localizer(model_name):
-    if model_name == "owl":
+    if "owl" in model_name :
         return OWL()
-    elif model_name == "yolo":
-        return YOLO11()
+    elif "yolo" in model_name :
+        return YOLO11(model_name)
     else:
         raise ValueError(f"Unknown model name: {model_name}")
 
@@ -43,8 +43,8 @@ class OWL:
 
 
 class YOLO11:
-    def __init__(self):
-        model_name = "yolo11m.pt"
+    def __init__(self, model_name):
+        model_name = model_name + ".pt"
         self.model = YOLO(model_name)
         self.objects_f = Path(__file__).parent / "objs" / "yolo.txt"
         self.objects = [line.strip() for line in self.objects_f.open().readlines()]
