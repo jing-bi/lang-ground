@@ -85,7 +85,7 @@ class LLM:
         pick the best option from the following: {', '.join(objects)},
         Please return a list of all suitable options as long as they make sense in the format of a Python list in the following format: ```python\n['option1', 'option2', ...]```"""
         res = self.generate(query)
-        match = re.search(r"`{3}python\\n(.*)`{3}", res, re.DOTALL)
+        match = re.search(r"`{3}python\n(.*)`{3}", res, re.DOTALL)
         if match:
             res = match.group(1)
             res = [r.replace("-", " ").replace("_", " ") for r in eval(res)]
