@@ -46,6 +46,8 @@ class LangGround:
             all_box_image = image_w_box(frame, objxbox)
             llm_box_image = image_w_box(frame, locobjxbox)
             return loc_objsxids, all_box_image, llm_box_image
+        elif return_type == "webcam":
+            return image_w_box(frame, locobjxbox)
         else:
             return loc_objsxids, objxbox, locobjxbox
 
