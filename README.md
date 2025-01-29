@@ -24,7 +24,8 @@ Not only find but also continuously track objects of interest
 <video width="100%" controls>
     <source src="/assets/langgnd.mp4" type="video/mp4">
 </video>
-[Watch the video](assets/langgnd.mp4)
+[Watch the Demo Video](assets/langgnd.mp4)
+
 The key component for this is above localization plus a elegent implemenetation of a stream SAM2 that support to the lastest version.
 
 
