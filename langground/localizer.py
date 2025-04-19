@@ -27,6 +27,9 @@ class OWL:
         self.objects = [line.strip() for line in self.objects_f.open().readlines()]
         self.device = "cuda"
 
+    def __call__(self, image, threshold=0.5):
+        return self.localize(image, threshold=threshold)
+
     def localize(self, image, threshold=0.5):
         image = Image.fromarray(image)
         final = defaultdict(list)
