@@ -1,3 +1,5 @@
+![Cover](assets/cover.png)
+
 # Language Grounding
 
 Localize and keep tracking things based on natural
